@@ -13,6 +13,7 @@ namespace MoviesApp.ViewModels
         [Required]
         [DataType(DataType.Date)]
         [OldActors(1920)]
+        [YoungActors(2016)]
         public DateTime Birthday { get; set; }
         [Range(0, 350)]
         public float Weight { get; set; }
