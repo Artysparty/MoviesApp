@@ -5,6 +5,7 @@ using MoviesApp.Data;
 using MoviesApp.Models;
 using MoviesApp.ViewModels;
 using System.Linq;
+using MoviesApp.Filters;
 
 namespace MoviesApp.Controllers
 {
@@ -75,6 +76,7 @@ namespace MoviesApp.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnsureAgeValid]
         public IActionResult Create([Bind("FirstName,LastName,Birthday,Weight,Growth")] InputActorViewModel inputModel)
         {
             if (ModelState.IsValid)
