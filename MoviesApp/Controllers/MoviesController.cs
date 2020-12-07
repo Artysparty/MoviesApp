@@ -1,38 +1,35 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MoviesApp.Data;
+using MoviesApp.Filters;
 using MoviesApp.Models;
 using MoviesApp.ViewModels;
 
 namespace MoviesApp.Controllers
 {
-    public class MoviesController: Controller
+    public class MoviesController : Controller
     {
         private readonly MoviesContext _context;
         private readonly ILogger<HomeController> _logger;
+        private readonly IMapper _mapper;
 
-
-        public MoviesController(MoviesContext context, ILogger<HomeController> logger)
+        public MoviesController(MoviesContext context, ILogger<HomeController> logger, IMapper mapper)
         {
             _context = context;
             _logger = logger;
+            _mapper = mapper;
         }
 
         // GET: Movies
         [HttpGet]
         public IActionResult Index()
         {
-            return View(_context.Movies.Select(m => new MovieViewModel
-            {
-                Id = m.Id,
-                Genre = m.Genre,
-                Price = m.Price,
-                Title = m.Title,
-                ReleaseDate = m.ReleaseDate
-            }).ToList());
+            var movies = _mapper.Map<IEnumerable<Movie>, IEnumerable<MovieViewModel>>(_context.Movies.ToList());
+            return View(movies);
         }
 
         // GET: Movies/Details/5
@@ -44,16 +41,8 @@ namespace MoviesApp.Controllers
                 return NotFound();
             }
 
-            var viewModel = _context.Movies.Where(m => m.Id == id).Select(m => new MovieViewModel
-            {
-                Id = m.Id,
-                Genre = m.Genre,
-                Price = m.Price,
-                Title = m.Title,
-                ReleaseDate = m.ReleaseDate
-            }).FirstOrDefault();
+            var viewModel = _mapper.Map<MovieViewModel>(_context.Movies.FirstOrDefault(m => m.Id == id));
 
-            
             if (viewModel == null)
             {
                 return NotFound();
@@ -61,7 +50,7 @@ namespace MoviesApp.Controllers
 
             return View(viewModel);
         }
-        
+
         // GET: Movies/Create
         [HttpGet]
         public IActionResult Create()
@@ -74,24 +63,19 @@ namespace MoviesApp.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnsureReleaseDateBeforeNow]
         public IActionResult Create([Bind("Title,ReleaseDate,Genre,Price")] InputMovieViewModel inputModel)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(new Movie
-                {
-                    Genre = inputModel.Genre,
-                    Price = inputModel.Price,
-                    Title = inputModel.Title,
-                    ReleaseDate = inputModel.ReleaseDate
-                });
+                _context.Add(_mapper.Map<Movie>(inputModel));
                 _context.SaveChanges();
 
                 return RedirectToAction(nameof(Index));
             }
             return View(inputModel);
         }
-        
+
         [HttpGet]
         // GET: Movies/Edit/5
         public IActionResult Edit(int? id)
@@ -101,19 +85,13 @@ namespace MoviesApp.Controllers
                 return NotFound();
             }
 
-            var editModel = _context.Movies.Where(m => m.Id == id).Select(m => new EditMovieViewModel
-            {
-                Genre = m.Genre,
-                Price = m.Price,
-                Title = m.Title,
-                ReleaseDate = m.ReleaseDate
-            }).FirstOrDefault();
-            
+            var editModel = _mapper.Map<EditMovieViewModel>(_context.Movies.FirstOrDefault(m => m.Id == id));
+
             if (editModel == null)
             {
                 return NotFound();
             }
-            
+
             return View(editModel);
         }
 
@@ -128,15 +106,9 @@ namespace MoviesApp.Controllers
             {
                 try
                 {
-                    var movie = new Movie
-                    {
-                        Id = id,
-                        Genre = editModel.Genre,
-                        Price = editModel.Price,
-                        Title = editModel.Title,
-                        ReleaseDate = editModel.ReleaseDate
-                    };
-                    
+                    var movie = _mapper.Map<Movie>(editModel);
+                    //помним что editModel не имеет Id!
+                    movie.Id = id;
                     _context.Update(movie);
                     _context.SaveChanges();
                 }
@@ -155,7 +127,7 @@ namespace MoviesApp.Controllers
             }
             return View(editModel);
         }
-        
+
         [HttpGet]
         // GET: Movies/Delete/5
         public IActionResult Delete(int? id)
@@ -165,14 +137,8 @@ namespace MoviesApp.Controllers
                 return NotFound();
             }
 
-            var deleteModel = _context.Movies.Where(m => m.Id == id).Select(m => new DeleteMovieViewModel
-            {
-                Genre = m.Genre,
-                Price = m.Price,
-                Title = m.Title,
-                ReleaseDate = m.ReleaseDate
-            }).FirstOrDefault();
-            
+            var deleteModel = _mapper.Map<DeleteMovieViewModel>(_context.Movies.FirstOrDefault(m => m.Id == id));
+
             if (deleteModel == null)
             {
                 return NotFound();
@@ -180,7 +146,7 @@ namespace MoviesApp.Controllers
 
             return View(deleteModel);
         }
-        
+
         // POST: Movies/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
