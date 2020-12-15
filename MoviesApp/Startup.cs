@@ -3,6 +3,7 @@ using System.Globalization;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MoviesApp.Data;
 using MoviesApp.Middleware;
+using MoviesApp.Models;
 using MoviesApp.Services;
 
 namespace MoviesApp
@@ -33,6 +35,13 @@ namespace MoviesApp
                 options.UseSqlServer(
                     "Server=LAPTOP-V6M1QK29;Database=MoviesContext;Integrated security=True;MultipleActiveResultSets=true"));
 
+            services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+                {
+                    options.Password.RequireNonAlphanumeric = false;
+                })
+                .AddEntityFrameworkStores<MoviesContext>()
+                .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>(TokenOptions.DefaultProvider);
+
             //Подключаем AutoMapper
             services.AddAutoMapper(typeof(Startup));
 
@@ -54,6 +63,7 @@ namespace MoviesApp
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 
